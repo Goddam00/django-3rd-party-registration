@@ -3,5 +3,5 @@
 
 # Run it  
 django-admin startproject [project_name]  
-django-admin startproject ithome  
+>django-admin startproject ithome  
 > python manage.py runserver  
