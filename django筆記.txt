@@ -1,0 +1,93 @@
+https://ithelp.ithome.com.tw/articles/10206389
+Day30 : Django 第三方登入 - 以Github為例
+
+
+
+https://ithelp.ithome.com.tw/articles/10204796
+Day 24 跳過，網站範例有bug難懂
+
+虛擬環境一定要用cmd activate，用powershell會擋activate
+django\ithome_enve\Scripts\activate
+
+
+創網頁專案
+django-admin startproject [project_name]
+django-admin startproject ithome
+python manage.py runserver
+
+創app
+python manage.py startapp [app_name]
+include 概念就是，它會將 weclome.urls 下的所有 url 前面都冠上 welcome/的意思，這樣子你才不
+會說在 welcome.urls 裡的每一個 url都要加上 welcome/
+food_vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+最關鍵的地方在最後一個 ForeignKey，在 Django中是 多對一(many-to-one)的關聯，而前方的參數代表的意思
+就是對應到哪一個類別，這裡對應到的是 Vendor，而後方的 on_delete 代表的是當對應的類別被刪除之後，這些
+對應到別人的資料要怎麼被處理，而 CASCADE 就是一倂刪除
+py manage.py makemigrations vendor
+只是將變動的資訊儲存起來而已，你要實際上讓它更動要在下
+python manage.py migrate vendor 0001
+
+我們應該避免使用單純 app 的名稱，或是在 __init__.py 建立default_app_config = vendor.apps.VendorConfig
+而是採用更明確的方式，在 settings.py 的 INSTALLED_APPS 加入 [someapp].apps.[SomeApps]Config
+
+創建一個管理者(superuser)，這樣我們才能夠進到該介面
+python manage.py createsuper
+如果我們沒有跟admin註冊說要顯示 vendor，所以沒有看到它是很正常的事情
+打開 vendor app 底下的 admin.py，並將它修改成如下，要記得import Vendor 及 Food 唷!
+一旦我們創建好了這些資料模型(Models)，Django便會提供我進行 Create、Retrieve、Update及Delete 的方式
+來操作資料庫，也就是所謂的CRUD
+新增一筆 Vendor 資料有兩種方法
+vendor = Vendor(vendor_name = "Alex", store_name="xelAshop", phone_number="09236", address='xs')
+vendor.save()
+or
+vendor = Vendor.objects.create(vendor_name = "Alex", store_name="xelAshop", phone_number="09236", address='xs')
+想要修改(Update)某一筆資料，也可以透過類似的方法修改
+Vendor.objects.filter(vendor_name = "Alex").update(address = 'Kao')
+
+# decorator，用這個就不用去admin註冊
+@admin.register(Vendor)
+
+
+在python manage.py shell裡面打
+Vendor.objects.all() 回傳資料庫
+vendor = Vendor.objects.get(id=1) # 取得第一筆資料
+vendor.vendor_name # 相對應的鍵值
+
+中文網頁設定
+ithomo\settings.py
+LANGUAGE_CODE = 'zh-Hant'
+
+TIME_ZONE = 'Asia/Taipei'
+
+ithome\settings.py
+TEMPLATES
+
+每個app的urls.py要自己從主要資料夾複製過去
+
+base.html裡面多了一個 block，其實這個block的概念就是 :
+{% block <name> %} : 定義一個區間，讓其他繼承者在去做更動
+如此一來，我們很容易地就完成了一個範本
+test.html
+{% extends %} : 就是告訴 Django 告訴 HTML，我繼承了別人(別忘了要把範本用兩個雙引號括號起來
+{% block <name> %} : 這個block就是去對照 base.html 的格式，將修改的內容填到block裡面唷!
+
+Django 提供給 forms 顯示的一種方式，目前總共有 3 種方式，分別是
+as_table
+as_p
+as_ul
+而它所代表的意思便是，我們的 form 要透過 HTML 的 <tr> or <p> or <li> 來裝飾
+值得注意的一點是，這個 form 只是方便大家辨識所用，但實際上它並沒有包覆著 標籤，所以這一個部分要自己完成唷!
+
+**form.cleaned_data : 因為 create 裡面所帶的參數為 **kwargs，故傳入 Dict 就必須加上 ** 來 unpack
+form不像是 modelform 一樣具備 save() 可以直接儲存資料的功能，所以只能透過ORM的方式來存取
+
+singleVendor並不是想要取多筆，而只想要取得一筆的時候，它只是一個 物件 而已，因此不具備可 迭代(iterable) 的特性
+因此我們的 vendor_detail.html 要修改成這樣， 也就是把 for loop 拿掉，並修改相對應的變數
+
+get_object_or_404 : 透過 get 取得一個物件
+get_list_or_404 : 透過 filter 取得一些物件
+
+urls.py urlpatterns的name概念就是，為這一個 path 命名，也就是說以後在別的地方使用這一個名稱 vendor_id，再將其反轉換 reverse()，便能夠方便的讓我們命名以及維護一個網址
+
+top-level settings.py INSTALLED_APPS 有更改，就要記得下python manage.py migrate
+
